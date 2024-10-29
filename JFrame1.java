@@ -8,6 +8,8 @@ import java.awt.event.ActionListener;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -56,7 +58,8 @@ public class JFrame1 extends JFrame implements ActionListener {
         inputPanel.add(displayRNumberLabel);
         inputPanel.add(rNumberLabel);  // 受付番号を表示するラベルをパネルに追加
 
-        printButton = new JButton("印刷");
+        ImageIcon printIcon = new ImageIcon("src/resources/co.png"); // 画像ファイル名を指定
+        printButton = new JButton("印刷", printIcon);  // ボタンにアイコンとテキストを設定
         printButton.addActionListener(this);
         inputPanel.add(printButton);
 
@@ -108,6 +111,9 @@ public class JFrame1 extends JFrame implements ActionListener {
                         "    <layout type='receipt_bm' width='580' height='0' margin-top='3000' margin-bottom='15' offset-cut='0' offset-label='0'/>\r\n" + //
                         "    <text>------------------------------------------&#10;</text>\r\n" + //
                         "    <text>X(旧twitter)↓&#10;</text>"+
+                        //"<symbol type='qrcode_model_1' level='level_h' width='6' height='3' size='0'>https://x.com/nsd244</symbol>"+
+                        "<logo key1='32' key2='34'/>"+
+                        
     //"<image width='8' height='48'>8PDw8A8PDw/w8PDwDw8PD/Dw8PAPDw8P8PDw8A8PDw/w8PDwDw8PD/Dw8PAPDw8P</image>" + 
     "<cut type='feed'/>"+
     "</epos-print>"+
