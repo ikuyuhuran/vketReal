@@ -29,9 +29,12 @@ public class JFrame1 extends JFrame implements ActionListener {
     private static String epos = "http://www.epson-pos.com/schemas/2011/03/epos-print";
 
     private int rNumber = 0;  // 受付番号カウンター
+    private int pNumber ;
     private JTextField ipField; // IPアドレス入力欄
     private JButton printButton;
+    private JButton s_printButton;
     private JLabel rNumberLabel;  // 受付番号表示用ラベル
+    private  String req ;
 
     public JFrame1() {
         this.setTitle("印刷入力画面");
@@ -63,6 +66,11 @@ public class JFrame1 extends JFrame implements ActionListener {
         printButton.addActionListener(this);
         inputPanel.add(printButton);
 
+        s_printButton = new JButton("控え印刷");  // ボタンにアイコンとテキストを設定
+        s_printButton.addActionListener(this);
+        inputPanel.add(s_printButton);
+
+
         this.add(inputPanel, BorderLayout.CENTER);
         this.setVisible(true);
     }
@@ -76,16 +84,18 @@ public class JFrame1 extends JFrame implements ActionListener {
                 ip = "192.168.100.7";  // デフォルトのIPアドレス
             }
 
-            String address = "http://" + ip + "/cgi-bin/epos/service.cgi?devid=local_printer&timeout=10000";
+           
+            
+            if(e.getSource()==printButton){
+                String address = "http://" + ip + "/cgi-bin/epos/service.cgi?devid=local_printer&timeout=10000";
 
-            URL url = new URL(address);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setDoOutput(true);
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "text/xml; charset=UTF-8");
-            conn.setRequestProperty("SOAPAction", "\"\"");
-
-            String req = 
+                URL url = new URL(address);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setDoOutput(true);
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "text/xml; charset=UTF-8");
+                conn.setRequestProperty("SOAPAction", "\"\"");
+             req = 
             "<s:Envelope xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'>" +
             "<s:Body>" +
             "<epos-print xmlns='http://www.epson-pos.com/schemas/2011/03/epos-print'>"+
@@ -118,28 +128,71 @@ public class JFrame1 extends JFrame implements ActionListener {
     "<cut type='feed'/>"+
     "</epos-print>"+
     "</s:Body>" +
-        "</s:Envelope>";
+        "</s:Envelope>"; try (OutputStreamWriter w = new OutputStreamWriter(conn.getOutputStream(), "UTF-8")) {
+            w.write(req);
+        }
 
-            try (OutputStreamWriter w = new OutputStreamWriter(conn.getOutputStream(), "UTF-8")) {
-                w.write(req);
-            }
+        conn.connect();
 
-            conn.connect();
+        StreamSource source = new StreamSource(conn.getInputStream());
+        DOMResult result = new DOMResult();
+        TransformerFactory factory = TransformerFactory.newInstance();
+        Transformer transformer = factory.newTransformer();
+        transformer.transform(source, result);
 
-            StreamSource source = new StreamSource(conn.getInputStream());
-            DOMResult result = new DOMResult();
-            TransformerFactory factory = TransformerFactory.newInstance();
-            Transformer transformer = factory.newTransformer();
-            transformer.transform(source, result);
+        //Document doc = (Document) result.getNode();
+        //Element el = (Element) doc.getElementsByTagNameNS(epos, "response").item(0);
+        //JOptionPane.showMessageDialog(this, "印刷成功: " + el.getAttribute("success"));
 
-            //Document doc = (Document) result.getNode();
-            //Element el = (Element) doc.getElementsByTagNameNS(epos, "response").item(0);
-            //JOptionPane.showMessageDialog(this, "印刷成功: " + el.getAttribute("success"));
+        // 受付番号をインクリメントしてラベルを更新
+        rNumber++;
+        rNumberLabel.setText(String.valueOf(rNumber));
+    }else if(e.getSource()==s_printButton){
+       
+            String address = "http://" + ip + "/cgi-bin/epos/service.cgi?devid=local_printer&timeout=10000";
 
-            // 受付番号をインクリメントしてラベルを更新
-            rNumber++;
-            rNumberLabel.setText(String.valueOf(rNumber));  // ラベルを更新
+                URL url = new URL(address);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setDoOutput(true);
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "text/xml; charset=UTF-8");
+                conn.setRequestProperty("SOAPAction", "\"\"");
+                req=
+                "<s:Envelope xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'>" +
+            "<s:Body>" +
+            "<epos-print xmlns='http://www.epson-pos.com/schemas/2011/03/epos-print'>"+
+            "<text lang='ja'/>"+
+            "<text align='center'/>"+
+            "<text width='3' height='3'/>";
+                for(int i = pNumber;i<rNumber+0;i++){
+             req +=  
+            
+                        "<text width='2' height='2'/>"+
+                        "<text>　受付番号(控え)　&#10;</text>"+
+                        "<text>"+String.format("%04d",pNumber)+"&#10;</text>"+
+                        "<cut type='feed'/>" 
 
+                    ;
+                    pNumber ++;}req += 
+    "</epos-print>"+
+    "</s:Body>" +
+        "</s:Envelope>"; try (OutputStreamWriter w = new OutputStreamWriter(conn.getOutputStream(), "UTF-8")) {
+            w.write(req);
+        }
+
+        conn.connect();
+
+        StreamSource source = new StreamSource(conn.getInputStream());
+        DOMResult result = new DOMResult();
+        TransformerFactory factory = TransformerFactory.newInstance();
+        Transformer transformer = factory.newTransformer();
+        transformer.transform(source, result);
+        
+        req=null;
+        
+
+             // ラベルを更新
+    }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "エラーが発生しました: " + ex.getMessage());
             ex.printStackTrace();
